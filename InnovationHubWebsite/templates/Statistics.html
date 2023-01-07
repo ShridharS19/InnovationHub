@@ -1,0 +1,242 @@
+{% extends "Layout.html" %}
+{% load static %}
+
+{% block hiddenVar %}
+  {{block.super}}
+{% endblock %}
+
+
+{% block Script %}
+
+  <script>
+    $(document).ready(function() {
+
+      let Num      = 0;
+      let Title    = '';
+      let Subtitle = '';
+      let Type     = '';
+      let Labels   = [];
+      let Data     = [];
+      let datasets = [];
+      let Key      = [];
+      let cutout   = 0;
+
+      let temp     = [];
+      let canvas;
+      let chart;
+
+      let length;
+
+      {% for chart in charts %}
+        //let raw_charts = {{charts}};
+        //console.log('Yesssssss!!!')
+
+        Num      = {{chart.No}};
+        Title    = '{{chart.Title}}';
+        Subtitle = '{{chart.Subtitle}}';
+        Type     = '{{chart.Type}}';
+        Labels   = [];
+        Data     = [];
+        datasets = [];
+        Key      = [];
+        length   = 0;
+        cutout   = {{chart.CutOut}};
+
+        {% for Label in chart.Labels %}
+          Labels.push('{{Label}}');
+        {% endfor %}
+
+        {% for DataSet in chart.Data %}
+          temp = []
+          {% for data in DataSet %}
+            temp.push({{data}});
+          {% endfor %}
+          Data.push(temp);
+
+        {% endfor %}
+
+        {% for key in chart.Keys %}
+          Key.push('{{key}}');
+        {% endfor %}
+
+        //console.log(Data);
+        //console.log(Labels);
+        //console.log(Num + " " + Title + " " + Subtitle + " " + Type);
+
+        {% if chart.Type == 'pie' %}
+          length = 1;
+        {% else %}
+          length = Data.length
+        {% endif %}
+
+        for(let i = 0; i < length; i++) {
+          let colours = ['rgba(13,30,32,1)', 'rgba(26,60,64,1)', 'rgba(20,77,83,1)', 'rgba(48,118,114,1)', 'rgba(96,236,228,1)']; //Darkest to Lightest
+          {% if chart.Type == 'pie' %}
+
+            datasets.push({
+              backgroundColor      : [colours[0], colours[2]],
+              hoverBackgroundColor : [colours[3], colours[3]],
+              borderColor          : [colours[0], colours[0]],
+              data                 : Data[i],
+            });
+
+          {% else %}
+          datasets.push({
+
+            label       : Key[i],
+            fill        : false,
+            lineTension : 0.15,
+            data        : Data[i],
+
+          });
+
+          if(i == 0) {
+            datasets[i]["borderColor"] = colours[1];
+            datasets[i]["backgroundColor"] = colours[1];
+
+            {% if chart.Type == 'line' %}
+            datasets[i]["pointBackgroundColor"] = colours[0];
+            datasets[i]["pointHoverBackgroundColor"] = colours[2];
+            {% endif %}
+
+            {% if chart.Type == 'bar' %}
+            datasets[i]["pointBackgroundColor"] = colours[0];
+            datasets[i]["pointHoverBackgroundColor"] = colours[2];
+            datasets[i]["hoverBackgroundColor"] = colours[3];
+            {% endif %}
+
+          } else if(i == 1) {
+             datasets[i]["borderColor"] = colours[2];
+             datasets[i]["backgroundColor"] = colours[2];
+
+             {% if chart.Type == 'line' %}
+             datasets[i]["pointBackgroundColor"] = colours[1];
+             datasets[i]["pointHoverBackgroundColor"] = colours[3];
+             {% endif %}
+
+             {% if chart.Type == 'bar' %}
+             //datasets[i]["pointBackgroundColor"] = colours[1];
+             datasets[i]["HoverBackgroundColor"] = colours[3];
+             datasets[i]["borderColor"] = colours[3];
+             datasets[i]["backgroundColor"] = colours[3];
+             datasets[i]["hoverBackgroundColor"] = colours[3];
+             {% endif %}
+          } else {
+             datasets[i]["borderColor"] = colours[3];
+             datasets[i]["backgroundColor"] = colours[3];
+
+             {% if chart.Type == 'line' %}
+             //datasets[i]["pointBackgroundColor"] = colours[2];
+             datasets[i]["HoverBackgroundColor"] = colours[3];
+             {% endif %}
+
+             {% if chart.Type == 'bar' %}
+             //datasets[i]["pointBackgroundColor"] = colours[2];
+             datasets[i]["HoverBackgroundColor"] = colours[3];
+             {% endif %}
+          }
+          //console.log(Key[i]);
+          {% endif %}
+        }
+
+        canvas = document.getElementById(Title.split(" ")[0])
+        //console.log(canvas);
+        chart = new Chart(canvas, {
+          type: Type,
+          data: {
+            labels  : Labels,
+            datasets: datasets,
+          },
+
+          options: {
+            {% if chart.Type == 'pie' %}
+            {% else %}
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: true,
+                }
+              }]
+            },
+            {% endif %}
+            legend: {
+              labels: {
+                fontColor : 'rgba(26,60,64,1)',
+                fontFamily: 'Courier',
+                fontStyle : 'bold',
+              },
+            },
+
+            {% if chart.Type == 'pie' %}
+              cutoutPercentage: cutout,
+            {% endif %}
+          },
+        });
+
+
+
+      {% endfor %}
+
+
+      $('#clearStats').click(function(){
+        $.ajax({
+          url:"/ADMIN/statistics/clear",
+          success:function(result){
+            console.log("Success");
+          }
+        });
+        location.reload();
+        //console.log("failed")
+      });
+    });
+  </script>
+
+{% endblock %}
+
+  {% block title %}InnovationHub  |  Statistics{% endblock %}
+
+  {% block heading %}Statistics{% endblock %}
+
+  {% block content %}
+
+    <div class="container_12">
+
+      {% for chart in charts %}
+        <div class="grid_6 header">
+
+          <table class="Data">
+
+            <thead>
+              <tr>
+                <th>{{chart.Title}}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr class="Subheading">
+                <td>{{chart.Subtitle}}</td>
+              </tr>
+              <tr>
+                <td id="WhiteBack"><canvas id={{chart.Title}} width='400px' height='300px'></canvas></td>
+              </tr>
+            </tbody>
+
+          </table>
+        </div>
+      {% endfor %}
+      <div class="clear"></div>
+
+      <div class="grid_12 header">
+        <!--<h1 class="top heading" style="cursor:pointer;">Click here to view Django Admin Controls</h1>-->
+        <table class="Data" style="cursor:pointer; border-radius:12px; background-color:#307672; border: 0px;" id='clearStats'>
+          <tbody>
+            <tr>
+              <td style="font-size: 30px; border-radius:6px;">Clear Website Statistics</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="clear"></div>
+    </div>
+
+  {% endblock %}

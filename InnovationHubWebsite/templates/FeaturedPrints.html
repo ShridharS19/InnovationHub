@@ -1,0 +1,136 @@
+{% extends "Layout.html" %}
+{% load static %}
+
+{% block hiddenVar %}
+
+  <input type="hidden" value={{num}} id="modelNum"></input>
+
+  {% for var in hiddenVar %}
+  <input type="hidden" value={{var.prints.Job.fk_job.file_path_obj}} id={{var.ids}}></input>
+  {% endfor %}
+
+{% endblock %}
+
+{% block Script %}
+
+<script>
+
+  $(document).ready(function() {
+
+    $(".likeButton").click(function() {
+      /*
+      //console.log($(this).data("clicked") == 'false');
+      if($(this).data("clicked") === 'false') {
+        $(this).data('clicked', 'true');
+        //console.log('Made True');
+      } else if($(this).data("clicked") === 'true'){
+        $(this).data('clicked', 'false');
+        //console.log('Made False');
+      }
+
+      console.log($(this).data("clicked"));
+      $(this).data('clicked', 'true');*/
+
+      if($(this).data("clicked")) {
+        $(this).removeData("clicked");
+        $(this).attr("style", "cursor:pointer; font-size: 15px;border:2px solid #E4EDDB;border-radius: 6px;padding:0 10;");
+        //console.log('Removed');
+
+        let id = $(this).data('id');
+        console.log('id: ' + id);
+
+        $.ajax({
+            url:"/featuredPrints/voteDown/" + id,
+            success:function(result){
+              console.log("DownVote");
+            }
+        });
+
+        let votes = $(this).siblings('.Votes' + id)[0];
+        //console.log('votes = ' + votes);
+        //console.log(votes);
+
+        let voteNum = Number(votes.textContent);
+        votes.innerHTML = (voteNum - 1).toString();
+
+      } else {
+        $(this).data("clicked", 'true');
+        $(this).attr("style", "cursor:pointer; background-color:#E4EDDB; color:#1A3C40; font-size: 15px;border:2px solid #E4EDDB;border-radius: 6px;");
+
+        let id = $(this).data('id');
+        console.log('id: ' + id);
+
+        $.ajax({
+            url:"/featuredPrints/voteUp/" + id,
+            success:function(result){
+              console.log("UpVote");
+            }
+        });
+
+        let votes = $(this).siblings('.Votes' + id)[0];
+        //console.log('votes = ' + votes);
+        //console.log(votes);
+
+        let voteNum = Number(votes.textContent);
+        votes.innerHTML = (voteNum + 1).toString();
+
+      }
+
+      //console.log($(this).data("clicked"));
+
+    });
+
+  });
+
+
+</script>
+
+{% endblock %}
+
+  {% block title %}InnovationHub  |  Featured Prints{% endblock %}
+<!--</head>-->
+
+
+  {% block heading %}Featured Prints{% endblock %}
+
+  {% block content %}
+  <div class="container_12">
+
+    {% for print in Jobs%}
+    <div class="grid_4 header">
+      <table class="Data">
+        <thead>
+          <tr>
+            <th colspan="2">{{print.Job.fk_job.job_title}}</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr class="Subheading">
+            <td colspan="2">{{print.Job.fk_job.fk_user.first_name}}</td>
+          </tr>
+          <tr>
+            <td id={{print.Job.fk_job.file_path_obj}} style="background:#E4EDDB;" colspan="2"><!--<img class='logo' src = "{% static 'Images/CuriosityGymLogo.png' %}" alt = 'Curiosity Gym'>--></td>
+          </tr>
+        </tbody>
+
+        <thead>
+          <tr>
+            {% if authenticated %}
+              {% if print.VoteStatus%}
+                <th class="likeButton" style="cursor:pointer; background-color:#E4EDDB; color:#1A3C40; font-size: 15px;border:2px solid #E4EDDB;border-radius: 6px;" data-id={{print.Job.fk_job.job_id}} data-clicked='true'>Like</th>
+              {% else %}
+                <th class="likeButton" style="cursor:pointer; font-size: 15px;border:2px solid #E4EDDB;border-radius: 6px;padding:0 10;" data-id={{print.Job.fk_job.job_id}}>Like</th>
+              {% endif %}
+            {% else %}
+                <th></th>
+            {% endif %}
+            <th class="Votes{{print.Job.fk_job.job_id}} Votes">{{print.Job.vote_score}}</th>
+          </tr>
+        </thead>
+
+      </table>
+    </div>
+    {% endfor %}
+  </div>
+  {% endblock %}
